@@ -40,7 +40,7 @@ namespace Graph_Test
             int individualLength = 100; // average for humans is 3200000000
             int populationSize = 100;
 
-            int generationMax = 10000;
+            int generationMax = 1000;
             //int generationMax = 25000000;
 
             double chartMaxY = 0.05; //0.0000005
