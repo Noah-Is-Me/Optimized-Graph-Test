@@ -51,6 +51,12 @@ namespace Graph_Test
 
             bool applyDriftBarrier = true;
 
+            double ZOfPositiveGermlineMutation = (0 - germlineMutationOffset) / mutationStdDev;
+            double ZOfPositiveSomaticMutation = (0 - somaticMutationOffset) / mutationStdDev;
+
+            double probabilityOfPositiveGermlineMutation;
+            double probabilityOfPositiveSomaticMutation;
+
             double idealFitness = (mutationStdDev/4) * 15000000 * Math.Log10(populationSize);
             double driftBarrierScaleFactor = 200 / idealFitness;
 
