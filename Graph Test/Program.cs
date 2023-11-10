@@ -30,15 +30,18 @@ namespace Graph_Test
             double mutationStdDev = 0.001;
             double mutationRateStdDev = 0.001; // 0.000000001
 
-            double germlineMutationOffset = -mutationStdDev / 3;
-            double somaticMutationOffset = -mutationStdDev / 3;  
+            double germlineMutationOffset = -mutationStdDev / 2;
+            double somaticMutationOffset = -mutationStdDev / 2;
+
+            int individualLength = 100; // average for humans is 3200000000
+            int populationSize = 100; // Or 100?
 
             double startingGermlineMutationRate = 0.01;  // average for humans is 0.000000012
             double startingSomaticMutationRate  = 0.01;  // average for humans is 0.00000028
             // Standard is 0.0001
 
-            int individualLength = 100; // average for humans is 3200000000
-            int populationSize = 100;
+            //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
+            //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
             int generationMax = 10000;
             //int generationMax = 25000000;
@@ -46,10 +49,10 @@ namespace Graph_Test
             double chartMaxY = 0.05; //0.0000005
             double yIncIntervals = 0.05;
 
-            bool applyDriftBarrier = false;
+            bool applyDriftBarrier = true;
 
-            double idealFitness = (double)populationSize * mutationStdDev * 1000f;
-            double driftBarrierScaleFactor = 1;
+            double idealFitness = (mutationStdDev/4) * 15000000 * Math.Log10(populationSize);
+            double driftBarrierScaleFactor = 200 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
             {
@@ -77,6 +80,9 @@ namespace Graph_Test
                 stopwatch.Start();
 
                 while (generationCount < generationMax + 1)
+                // Set tracepoint here to track the generations while running.
+                // Conditional: generationCount%10000==0    ;  Message:  Generations: {generationCount}
+                // NOTE: Tracepoints drastically increase runtime!
                 {
                     generationCount++;
 
@@ -180,7 +186,7 @@ namespace Graph_Test
                 }
 
                 Charting chart = new Charting();
-                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, loserDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize);
+                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, loserDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness);
             }
 
             stopwatch.Stop();
@@ -192,11 +198,11 @@ namespace Graph_Test
 
             double applyDriftBarrierToFitness(double fitnessIncrease, double currentFitness)
             {
-                /*
                 double d = currentFitness - idealFitness;
-                double scale = driftBarrierScaleFactor * Math.Exp(-Math.Abs(d) / currentFitness);
-                fitnessIncrease *= scale;
-                */
+
+                double tanhFunction = (-50 * Math.Tanh( (driftBarrierScaleFactor*d) + 2 )) + 50;
+
+                fitnessIncrease = fitnessIncrease * tanhFunction / 100;
 
                 return fitnessIncrease;
             }
@@ -229,7 +235,7 @@ namespace Graph_Test
     }
     class Charting
     {
-        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, double[] loserData, int generations, double chartMaxY, double yIncIntervals, int populationSize)
+        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, double[] loserData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness)
         {
 
             
@@ -259,17 +265,19 @@ namespace Graph_Test
             Chart Chart = new Chart();
             ChartArea CA = Chart.ChartAreas.Add("A1");
 
-            Series S3 = Chart.Series.Add("Highest Fitness");
-            Series S2 = Chart.Series.Add("Somatic Mutation Rate");
-            Series S1 = Chart.Series.Add("Germline Mutation Rate");
-            //Series S4 = Chart.Series.Add("Lowest Fitness");
+            Series fitnessSeries = Chart.Series.Add("Highest Fitness");
+            Series somaticSeries = Chart.Series.Add("Somatic Mutation Rate");
+            Series germlineSeries = Chart.Series.Add("Germline Mutation Rate");
+            //Series loserSeries = Chart.Series.Add("Lowest Fitness");
+            //Series driftBarrierSeries = Chart.Series.Add("Ideal Fitness");
 
-            S1.ChartType = SeriesChartType.FastLine;
-            S2.ChartType = SeriesChartType.FastLine;
-            S3.ChartType = SeriesChartType.FastLine;
-            //S4.ChartType = SeriesChartType.FastLine;
+            fitnessSeries.ChartType = SeriesChartType.FastLine;
+            somaticSeries.ChartType = SeriesChartType.FastLine;
+            germlineSeries.ChartType = SeriesChartType.FastLine;
+            //loserSeries.ChartType = SeriesChartType.FastLine;
+            //driftBarrierSeries.ChartType = SeriesChartType.FastLine;
 
-            S3.YAxisType = AxisType.Secondary;
+            fitnessSeries.YAxisType = AxisType.Secondary;
             //S4.YAxisType = AxisType.Secondary;
 
             Chart.BackColor = Color.White;
@@ -291,39 +299,58 @@ namespace Graph_Test
                 CA.AxisY2.Maximum = fitnessData.Max() + 1;
             }
 
+            
+            // if (applyDriftBarrier) CA.AxisY2.Maximum = idealFitness + (idealFitness / 100);
+
             CA.AxisX.Interval = (double)generations/10;
             CA.AxisY.Interval = chartMaxY/20;
+
             CA.AxisX.Title = "Generations";
             CA.AxisY.Title = "Mutation Rates";
             CA.AxisY2.Title = "Fitness (Points)";
+
             CA.AxisX.TitleAlignment = StringAlignment.Center;
             CA.AxisY.TitleAlignment = StringAlignment.Center;
             CA.AxisY2.TitleAlignment = StringAlignment.Center;
+
             CA.AxisX.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
             CA.AxisY.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
             CA.AxisY2.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
+
             Chart.Titles.Add("Fitness and the Evolution of the Germline and Somatic Mutation Rates Over Generations");
             Chart.Titles.ElementAt(0).Font = new Font("Ariel", 15, FontStyle.Bold);
             Chart.Size = new Size(1920, 1080);
+
             Chart.Series["Germline Mutation Rate"].BorderWidth = 2;
             Chart.Series["Somatic Mutation Rate"].BorderWidth = 2;
             Chart.Series["Highest Fitness"].BorderWidth = 4;
             //Chart.Series["Lowest Fitness"].BorderWidth = 4;
+            //Chart.Series["Ideal Fitness"].BorderWidth = 4;
+
             Chart.Series["Germline Mutation Rate"].Color = Color.Blue;
             Chart.Series["Somatic Mutation Rate"].Color = Color.Red;
             Chart.Series["Highest Fitness"].Color = Color.DarkGreen;
             //Chart.Series["Lowest Fitness"].Color = Color.DarkOrange;
+            //Chart.Series["Ideal Fitness"].Color = Color.DarkOrange;
+
             Chart.AntiAliasing = AntiAliasingStyles.Graphics;
             Chart.TextAntiAliasingQuality = TextAntiAliasingQuality.High;
+
             for (int i=0;i<generations+1; i++)
             {
-                S1.Points.AddXY(i, germlineData[i]);
-                S2.Points.AddXY(i, somaticData[i]);
-                S3.Points.AddXY(i, fitnessData[i]);
-                //S4.Points.AddXY(i, loserData[i]);
+                germlineSeries.Points.AddXY(i, germlineData[i]);
+                somaticSeries.Points.AddXY(i, somaticData[i]);
+                fitnessSeries.Points.AddXY(i, fitnessData[i]);
+                //loserSeries.Points.AddXY(i, loserData[i]);
+
+                // if (applyDriftBarrier) driftBarrierSeries.Points.AddXY(i, idealFitness);
             }
 
+            Debug.WriteLine(idealFitness);
+
             
+
+
             Legend L = Chart.Legends.Add("L");
             L.LegendStyle = LegendStyle.Column;
             L.Title = "Legend";
