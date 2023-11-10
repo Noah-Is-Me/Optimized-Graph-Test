@@ -7,6 +7,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using System.Drawing;
 using System.IO;
 using System.Diagnostics;
+//using MathNet.Numerics.Distributions;
 
 namespace Graph_Test
 {
@@ -51,13 +52,13 @@ namespace Graph_Test
 
             bool applyDriftBarrier = true;
 
-            double ZOfPositiveGermlineMutation = (0 - germlineMutationOffset) / mutationStdDev;
-            double ZOfPositiveSomaticMutation = (0 - somaticMutationOffset) / mutationStdDev;
+            //double ZOfPositiveGermlineMutation = (0 - germlineMutationOffset) / mutationStdDev;
+            //double ZOfPositiveSomaticMutation = (0 - somaticMutationOffset) / mutationStdDev;
 
-            double probabilityOfPositiveGermlineMutation;
-            double probabilityOfPositiveSomaticMutation;
+            //double probabilityOfPositiveGermlineMutation = (1 - Normal.CDF(germlineMutationOffset,mutationStdDev,0));
+            //double probabilityOfPositiveSomaticMutation = (1 - Normal.CDF(somaticMutationOffset,mutationStdDev,0));
 
-            double idealFitness = (mutationStdDev/4) * 15000000 * Math.Log10(populationSize);
+            double idealFitness = (mutationStdDev*probabilityOfPositiveGermlineMutation) * 15000000 * Math.Log10(populationSize);
             double driftBarrierScaleFactor = 200 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
