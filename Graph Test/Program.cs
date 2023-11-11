@@ -7,7 +7,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using System.Drawing;
 using System.IO;
 using System.Diagnostics;
-//using MathNet.Numerics.Distributions;
+using MathNet.Numerics.Distributions;
 
 namespace Graph_Test
 {
@@ -31,14 +31,14 @@ namespace Graph_Test
             double mutationStdDev = 0.001;
             double mutationRateStdDev = 0.001; // 0.000000001
 
-            double germlineMutationOffset = -mutationStdDev / 2;
-            double somaticMutationOffset = -mutationStdDev / 2;
+            double germlineMutationMean = -mutationStdDev / 1;
+            double somaticMutationMean = -mutationStdDev / 1;
 
             int individualLength = 100; // average for humans is 3200000000
-            int populationSize = 100; // Or 100?
+            int populationSize = 1000; // Or 100?
 
-            double startingGermlineMutationRate = 0.01;  // average for humans is 0.000000012
-            double startingSomaticMutationRate  = 0.01;  // average for humans is 0.00000028
+            double startingGermlineMutationRate = 0.001;  // average for humans is 0.000000012
+            double startingSomaticMutationRate  = 0.001;  // average for humans is 0.00000028
             // Standard is 0.0001
 
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
@@ -52,13 +52,26 @@ namespace Graph_Test
 
             bool applyDriftBarrier = true;
 
-            //double ZOfPositiveGermlineMutation = (0 - germlineMutationOffset) / mutationStdDev;
-            //double ZOfPositiveSomaticMutation = (0 - somaticMutationOffset) / mutationStdDev;
+            double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
+            //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
+            
+            double probabilityOfPositiveGermlineMutation = (1 - Normal.CDF(germlineMutationMean, mutationStdDev,0));
+            //double probabilityOfPositiveSomaticMutation = (1 - Normal.CDF(somaticMutationMean,mutationStdDev,0));
 
-            //double probabilityOfPositiveGermlineMutation = (1 - Normal.CDF(germlineMutationOffset,mutationStdDev,0));
-            //double probabilityOfPositiveSomaticMutation = (1 - Normal.CDF(somaticMutationOffset,mutationStdDev,0));
+            double meanPositiveGermlineMutation = 0.003; // THIS IS COMPLETELY ARBITRARY! FIX THIS!
 
-            double idealFitness = (mutationStdDev*probabilityOfPositiveGermlineMutation) * 15000000 * Math.Log10(populationSize);
+            //double meanPositiveGermlineMutation = germlineMutationMean + (mutationStdDev * (Normal.PDF(germlineMutationMean, mutationStdDev, ZOfPositiveGermlineMutation) / probabilityOfPositiveGermlineMutation));
+            //double meanPositiveSomaticMutation = somaticMutationMean + mutationStdDev * (Normal.PDF(somaticMutationMean, mutationStdDev, ZOfPositiveSomaticMutation) / probabilityOfPositiveSomaticMutation);
+
+            double idealFitness = (meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation / individualLength) * generationMax * Math.Log10(populationSize);
+
+            Debug.WriteLine("germlineMutationMean: " + germlineMutationMean);
+            Debug.WriteLine("ZOfPositiveGermlineMutation: " + ZOfPositiveGermlineMutation);
+            Debug.WriteLine("probabilityOfPositiveGermlineMutation: " + probabilityOfPositiveGermlineMutation);
+            Debug.WriteLine("meanPositiveGermlineMutation: " + meanPositiveGermlineMutation);
+            Debug.WriteLine("positiveMean * positiveChance: " + meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation);
+            Debug.WriteLine("Ideal Fitness: " + idealFitness);
+
             double driftBarrierScaleFactor = 200 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
@@ -72,7 +85,7 @@ namespace Graph_Test
                 fittestIndividual[0] = startingGermlineMutationRate;
                 fittestIndividual[1] = startingSomaticMutationRate;
 
-                bool mutationRateChanged = false;
+                //bool mutationRateChanged = false;
 
                 double[] germlineDataPoints = new double[generationMax + 1];
                 double[] somaticDataPoints = new double[generationMax + 1];
@@ -91,16 +104,22 @@ namespace Graph_Test
                 // Conditional: generationCount%10000==0    ;  Message:  Generations: {generationCount}
                 // NOTE: Tracepoints drastically increase runtime!
                 {
+
+                    if (generationCount % 1000 == 0) { Debug.WriteLine("Generation: " + generationCount); }
+
                     generationCount++;
 
-                    mutationRateChanged = false;
+                    
+
+                    //mutationRateChanged = false;
 
                     germlineDataPoints[generationCount - 1] = fittestIndividual[0];
                     somaticDataPoints[generationCount - 1] = fittestIndividual[1];
                     fitnessDataPoints[generationCount - 1] = highestFitness;
                     loserDataPoints[generationCount - 1] = lowestFitness;
 
-                    lowestFitness = highestFitness;
+                    lowestFitness = double.PositiveInfinity;
+                    highestFitness = double.NegativeInfinity;
 
                     double germlineMutationRate = fittestIndividual[0];
                     double[] tempFittestIndividual = new double[individualLength + 2];
@@ -127,7 +146,7 @@ namespace Graph_Test
                                 }
                                 else
                                 {
-                                    double fitnessIncrease = normalDistribution(germlineMutationOffset, mutationStdDev);
+                                    double fitnessIncrease = normalDistribution(germlineMutationMean, mutationStdDev);
                                     if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[j]);
 
                                     currentIndividual[j] += fitnessIncrease;
@@ -158,7 +177,7 @@ namespace Graph_Test
                                 }
                                 else
                                 {
-                                    double fitnessIncrease = normalDistribution(somaticMutationOffset, mutationStdDev);
+                                    double fitnessIncrease = normalDistribution(somaticMutationMean, mutationStdDev);
                                     if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[u]);
 
                                     currentIndividual[u] += fitnessIncrease;
@@ -173,10 +192,12 @@ namespace Graph_Test
                         if (currentFitness > highestFitness)
                         {
 
+                            /*
                             if (fittestIndividual[0] != currentIndividual[0] || fittestIndividual[1] != currentIndividual[1])
                             {
                                 mutationRateChanged = true;
                             }
+                            */
 
                             highestFitness = currentFitness;
                             tempFittestIndividual = currentIndividual;
@@ -197,7 +218,7 @@ namespace Graph_Test
             }
 
             stopwatch.Stop();
-            Console.WriteLine($"Execution Time:  {stopwatch.ElapsedMilliseconds} ms, {(int)(stopwatch.ElapsedMilliseconds / 1000)} s.");
+            Debug.WriteLine($"Execution Time:  {stopwatch.ElapsedMilliseconds} ms, {(int)(stopwatch.ElapsedMilliseconds / 1000)} s.");
 
 
 
@@ -209,19 +230,11 @@ namespace Graph_Test
 
                 double tanhFunction = (-50 * Math.Tanh( (driftBarrierScaleFactor*d) + 2 )) + 50;
 
+                //Debug.WriteLine("Scale: " + tanhFunction + " ;   Distance: " + d);
+
                 fitnessIncrease = fitnessIncrease * tanhFunction / 100;
 
                 return fitnessIncrease;
-            }
-
-            double getFitness(double[] individual)
-            {
-                float fitness = 0;
-                for (int i = 2; i < individual.Length; i++)
-                {
-                    fitness += (float)individual[i];
-                }
-                return (double)fitness;
             }
 
             double normalDistribution(double mean, double stdDev)
@@ -233,10 +246,24 @@ namespace Graph_Test
                 return randNormal;
             }
 
+            /*
+            double getFitness(double[] individual)
+            {
+                float fitness = 0;
+                for (int i = 2; i < individual.Length; i++)
+                {
+                    fitness += (float)individual[i];
+                }
+                return (double)fitness;
+            }
+            */
+
+            /*
             double map(double n, double from1, double to1, double from2, double to2)
             {
                 return (n - from1) / (to1 - from1) * (to2 - from2) + from2;
             }
+            */
 
         }
     }
@@ -245,6 +272,7 @@ namespace Graph_Test
         public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, double[] loserData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness)
         {
 
+            int fitnessMultiplier = 1;
             
             if (somaticData.Max() > chartMaxY || germlineData.Max() > chartMaxY) {
                 chartMaxY = Math.Max(somaticData.Max(), germlineData.Max());
@@ -267,7 +295,7 @@ namespace Graph_Test
             string graphsFolderPath = Path.Combine(projectDirectory, "Graphs");
             string imagePath = Path.Combine(graphsFolderPath, graphInfo + ".png");
 
-            Console.WriteLine(imagePath);
+            Debug.WriteLine("Image Path: " + imagePath);
 
             Chart Chart = new Chart();
             ChartArea CA = Chart.ChartAreas.Add("A1");
@@ -297,13 +325,13 @@ namespace Graph_Test
             CA.AxisY.Maximum = chartMaxY;
             CA.AxisX.Maximum = generations;
 
-            int chartMaxY2 = (int)Math.Ceiling(fitnessData.Max());
+            int chartMaxY2 = (int)Math.Ceiling(fitnessData.Max()*fitnessMultiplier);
             CA.AxisY2.Maximum = chartMaxY2;
             //CA.AxisY2.Interval = chartMaxY2 / 20;
 
             if (fitnessData.Max() == fitnessData.Min())
             {
-                CA.AxisY2.Maximum = fitnessData.Max() + 1;
+                CA.AxisY2.Maximum = fitnessData.Max()* fitnessMultiplier + 1*fitnessMultiplier;
             }
 
             
@@ -347,16 +375,11 @@ namespace Graph_Test
             {
                 germlineSeries.Points.AddXY(i, germlineData[i]);
                 somaticSeries.Points.AddXY(i, somaticData[i]);
-                fitnessSeries.Points.AddXY(i, fitnessData[i]);
+                fitnessSeries.Points.AddXY(i, fitnessData[i]* fitnessMultiplier);
                 //loserSeries.Points.AddXY(i, loserData[i]);
 
                 // if (applyDriftBarrier) driftBarrierSeries.Points.AddXY(i, idealFitness);
             }
-
-            Debug.WriteLine(idealFitness);
-
-            
-
 
             Legend L = Chart.Legends.Add("L");
             L.LegendStyle = LegendStyle.Column;
