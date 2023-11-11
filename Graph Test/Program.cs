@@ -80,7 +80,6 @@ namespace Graph_Test
 
                 double[] fittestIndividual = new double[individualLength + 2];
                 double highestFitness = 0;
-                double lowestFitness = 0;
 
                 fittestIndividual[0] = startingGermlineMutationRate;
                 fittestIndividual[1] = startingSomaticMutationRate;
@@ -90,7 +89,6 @@ namespace Graph_Test
                 double[] germlineDataPoints = new double[generationMax + 1];
                 double[] somaticDataPoints = new double[generationMax + 1];
                 double[] fitnessDataPoints = new double[generationMax + 1];
-                double[] loserDataPoints = new double[generationMax + 1];
 
                 for (int i = 2; i < individualLength + 2; i++)
                 {
@@ -116,9 +114,7 @@ namespace Graph_Test
                     germlineDataPoints[generationCount - 1] = fittestIndividual[0];
                     somaticDataPoints[generationCount - 1] = fittestIndividual[1];
                     fitnessDataPoints[generationCount - 1] = highestFitness;
-                    loserDataPoints[generationCount - 1] = lowestFitness;
 
-                    lowestFitness = double.PositiveInfinity;
                     highestFitness = double.NegativeInfinity;
 
                     double germlineMutationRate = fittestIndividual[0];
@@ -202,10 +198,6 @@ namespace Graph_Test
                             highestFitness = currentFitness;
                             tempFittestIndividual = currentIndividual;
                         }
-                        else if (currentFitness < lowestFitness)
-                        {
-                            lowestFitness = currentFitness;
-                        }
                     }
 
 
@@ -214,7 +206,7 @@ namespace Graph_Test
                 }
 
                 Charting chart = new Charting();
-                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, loserDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness);
+                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness);
             }
 
             stopwatch.Stop();
@@ -269,7 +261,7 @@ namespace Graph_Test
     }
     class Charting
     {
-        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, double[] loserData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness)
+        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness)
         {
 
             int fitnessMultiplier = 1;
@@ -303,13 +295,11 @@ namespace Graph_Test
             Series fitnessSeries = Chart.Series.Add("Highest Fitness");
             Series somaticSeries = Chart.Series.Add("Somatic Mutation Rate");
             Series germlineSeries = Chart.Series.Add("Germline Mutation Rate");
-            //Series loserSeries = Chart.Series.Add("Lowest Fitness");
             //Series driftBarrierSeries = Chart.Series.Add("Ideal Fitness");
 
             fitnessSeries.ChartType = SeriesChartType.FastLine;
             somaticSeries.ChartType = SeriesChartType.FastLine;
             germlineSeries.ChartType = SeriesChartType.FastLine;
-            //loserSeries.ChartType = SeriesChartType.FastLine;
             //driftBarrierSeries.ChartType = SeriesChartType.FastLine;
 
             fitnessSeries.YAxisType = AxisType.Secondary;
@@ -359,13 +349,11 @@ namespace Graph_Test
             Chart.Series["Germline Mutation Rate"].BorderWidth = 2;
             Chart.Series["Somatic Mutation Rate"].BorderWidth = 2;
             Chart.Series["Highest Fitness"].BorderWidth = 4;
-            //Chart.Series["Lowest Fitness"].BorderWidth = 4;
             //Chart.Series["Ideal Fitness"].BorderWidth = 4;
 
             Chart.Series["Germline Mutation Rate"].Color = Color.Blue;
             Chart.Series["Somatic Mutation Rate"].Color = Color.Red;
             Chart.Series["Highest Fitness"].Color = Color.DarkGreen;
-            //Chart.Series["Lowest Fitness"].Color = Color.DarkOrange;
             //Chart.Series["Ideal Fitness"].Color = Color.DarkOrange;
 
             Chart.AntiAliasing = AntiAliasingStyles.Graphics;
@@ -376,7 +364,6 @@ namespace Graph_Test
                 germlineSeries.Points.AddXY(i, germlineData[i]);
                 somaticSeries.Points.AddXY(i, somaticData[i]);
                 fitnessSeries.Points.AddXY(i, fitnessData[i]* fitnessMultiplier);
-                //loserSeries.Points.AddXY(i, loserData[i]);
 
                 // if (applyDriftBarrier) driftBarrierSeries.Points.AddXY(i, idealFitness);
             }

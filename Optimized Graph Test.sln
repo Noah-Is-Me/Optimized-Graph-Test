@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Graph Test", "Graph Test\Graph Test.csproj", "{A15949D1-E8B0-4DAC-9205-5C74529A2CA7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Optimized Graph Test", "Graph Test\Optimized Graph Test.csproj", "{A15949D1-E8B0-4DAC-9205-5C74529A2CA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

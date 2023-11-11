@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{A15949D1-E8B0-4DAC-9205-5C74529A2CA7}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>Graph_Test</RootNamespace>
-    <AssemblyName>Graph Test</AssemblyName>
+    <RootNamespace>Optimized_Graph_Test</RootNamespace>
+    <AssemblyName>Optimized Graph Test</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -72,6 +72,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
