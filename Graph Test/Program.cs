@@ -78,7 +78,7 @@ namespace Graph_Test
             {
                 int generationCount = 0;
 
-                double[] fittestIndividual = new double[individualLength + 2];
+                double[] fittestIndividual = new double[3];
                 double highestFitness = 0;
 
                 fittestIndividual[0] = startingGermlineMutationRate;
@@ -118,41 +118,40 @@ namespace Graph_Test
                     highestFitness = double.NegativeInfinity;
 
                     double germlineMutationRate = fittestIndividual[0];
-                    double[] tempFittestIndividual = new double[individualLength + 2];
+                    double[] tempFittestIndividual = new double[3];
                     fittestIndividual.CopyTo(tempFittestIndividual, 0);
 
                     for (int i = 0; i < populationSize; i++)
                     {
-                        double[] currentIndividual = new double[individualLength + 2];
+                        double[] currentIndividual = new double[3];
                         fittestIndividual.CopyTo(currentIndividual, 0);
 
                         for (int j = 0; j < currentIndividual.Length; j++)
                         {
-                            if (random.NextDouble() <= germlineMutationRate)
+                            if (j == 0 || j == 1)
                             {
-                                if (j == 0 || j == 1)
+                                if (random.NextDouble() <= germlineMutationRate)
                                 {
-
                                     double newMutationRate = normalDistribution(currentIndividual[j], mutationRateStdDev);
                                     newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
 
                                     currentIndividual[j] = newMutationRate;
-
-
                                 }
-                                else
-                                {
-                                    double fitnessIncrease = normalDistribution(germlineMutationMean, mutationStdDev);
-                                    if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[j]);
-
-                                    currentIndividual[j] += fitnessIncrease;
+                            }
+                            else
+                            {
+                                double fitnessIncrease = 0;
+                                for (int o=0; o<individualLength; o++) {
+                                    fitnessIncrease += normalDistribution(germlineMutationMean, mutationStdDev);
                                 }
+                                if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[j]);
+                                currentIndividual[j] += fitnessIncrease;
                             }
                         }
 
                         double somaticMutationRate = currentIndividual[1];
 
-                        double[] currentSomaticIndividual = new double[individualLength + 2];
+                        double[] currentSomaticIndividual = new double[3];
 
                         currentIndividual.CopyTo(currentSomaticIndividual, 0);
 
