@@ -28,29 +28,30 @@ namespace Graph_Test
 
             int runCount = 1; // How many times to run the simulation?
 
-            double mutationStdDev = 0.001;
-            double mutationRateStdDev = 0.001; // 0.000000001
+            double mutationStdDev = 1000;
+            double mutationRateStdDev = 0.000001; // 0.000000001
+            double mutationRateRollMultiplier = 1;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
 
-            int individualLength = 100; // average for humans is 3200000000
-            int populationSize = 1000; // Or 100?
+            int individualLength = 25000; // average for humans is 3200000000
+            int populationSize = 100; // Or 100?
 
-            double startingGermlineMutationRate = 0.001;  // average for humans is 0.000000012
-            double startingSomaticMutationRate  = 0.001;  // average for humans is 0.00000028
+            double startingGermlineMutationRate = 0.00001;  // average for humans is 0.000000012
+            double startingSomaticMutationRate  = 0.0002;  // average for humans is 0.00000028
             // Standard is 0.0001
 
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 10000;
+            int generationMax = 25000000;
             //int generationMax = 25000000;
 
             double chartMaxY = 0.05; //0.0000005
             double yIncIntervals = 0.05;
 
-            bool applyDriftBarrier = true;
+            bool applyDriftBarrier = false;
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
             //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
@@ -59,6 +60,21 @@ namespace Graph_Test
             //double probabilityOfPositiveSomaticMutation = (1 - Normal.CDF(somaticMutationMean,mutationStdDev,0));
 
             double meanPositiveGermlineMutation = 0.003; // THIS IS COMPLETELY ARBITRARY! FIX THIS!
+
+            //Binomial probabilityOfGermlineSuccess = new Binomial(startingGermlineMutationRate, individualLength);
+            //Binomial probabilityOfSomaticSuccess = new Binomial(startingGermlineMutationRate, individualLength);
+
+            Poisson probabilityOfGermlineSuccess = new Poisson(startingGermlineMutationRate * individualLength);
+
+            /*
+            for (int i = 0; i < 1000; i++)
+            {
+                Debug.WriteLine(probabilityOfGermlineSuccess.Sample());
+            }
+            */
+
+            bool germlineMutationRateChanged = false;
+            //bool somaticMutationRateChanged = false;
 
             //double meanPositiveGermlineMutation = germlineMutationMean + (mutationStdDev * (Normal.PDF(germlineMutationMean, mutationStdDev, ZOfPositiveGermlineMutation) / probabilityOfPositiveGermlineMutation));
             //double meanPositiveSomaticMutation = somaticMutationMean + mutationStdDev * (Normal.PDF(somaticMutationMean, mutationStdDev, ZOfPositiveSomaticMutation) / probabilityOfPositiveSomaticMutation);
@@ -84,32 +100,20 @@ namespace Graph_Test
                 fittestIndividual[0] = startingGermlineMutationRate;
                 fittestIndividual[1] = startingSomaticMutationRate;
 
-                //bool mutationRateChanged = false;
-
                 double[] germlineDataPoints = new double[generationMax + 1];
                 double[] somaticDataPoints = new double[generationMax + 1];
                 double[] fitnessDataPoints = new double[generationMax + 1];
 
-                for (int i = 2; i < individualLength + 2; i++)
-                {
-                    fittestIndividual[i] = 0;
-                }
+                fittestIndividual[2] = 0;
 
                 stopwatch.Start();
 
                 while (generationCount < generationMax + 1)
-                // Set tracepoint here to track the generations while running.
-                // Conditional: generationCount%10000==0    ;  Message:  Generations: {generationCount}
-                // NOTE: Tracepoints drastically increase runtime!
                 {
 
-                    if (generationCount % 1000 == 0) { Debug.WriteLine("Generation: " + generationCount); }
+                    if (generationCount % 100000 == 0) { Debug.WriteLine("Generation: " + generationCount); }
 
                     generationCount++;
-
-                    
-
-                    //mutationRateChanged = false;
 
                     germlineDataPoints[generationCount - 1] = fittestIndividual[0];
                     somaticDataPoints[generationCount - 1] = fittestIndividual[1];
@@ -121,80 +125,105 @@ namespace Graph_Test
                     double[] tempFittestIndividual = new double[3];
                     fittestIndividual.CopyTo(tempFittestIndividual, 0);
 
+                    if (germlineMutationRateChanged)
+                    {
+                        probabilityOfGermlineSuccess = new Poisson(germlineMutationRate * individualLength);
+                    }
+
                     for (int i = 0; i < populationSize; i++)
                     {
                         double[] currentIndividual = new double[3];
                         fittestIndividual.CopyTo(currentIndividual, 0);
 
-                        for (int j = 0; j < currentIndividual.Length; j++)
-                        {
-                            if (j == 0 || j == 1)
-                            {
-                                if (random.NextDouble() <= germlineMutationRate)
-                                {
-                                    double newMutationRate = normalDistribution(currentIndividual[j], mutationRateStdDev);
-                                    newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
+                        // GERMLINE MUTATIONS --------------------
 
-                                    currentIndividual[j] = newMutationRate;
-                                }
+                        // Germline Rate Mutate:
+                        if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
+                        {
+                            double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.000001);
+
+                            currentIndividual[0] = newGermlineRate;
+                        }
+
+                        // Somatic Rate Mutate:
+                        if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
+                        {
+                            double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.000001);
+
+                            currentIndividual[1] = newSomaticRate;
+                        }
+
+
+                        // Fitness Mutate:
+                        int rollSuccesses = probabilityOfGermlineSuccess.Sample();
+                        double fitnessIncrease = rollSuccesses * normalDistribution(germlineMutationMean, mutationStdDev);
+                        // NOTICE: Must figure out how to properly modify normal distribution.
+
+                        if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[2]);
+                        currentIndividual[2] += fitnessIncrease;
+                        
+
+
+                        // SOMATIC MUTATIONS --------------------
+
+                        double somaticMutationRate = currentIndividual[1];
+                        Poisson probabilityOfSomaticSuccess = new Poisson(somaticMutationRate * individualLength);
+                        double[] currentSomaticIndividual = new double[3];
+                        currentIndividual.CopyTo(currentSomaticIndividual, 0);
+
+                        // Germline Rate Mutate:
+                        if (random.NextDouble() <= somaticMutationRate*mutationRateRollMultiplier)
+                        {
+                            double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
+                            currentSomaticIndividual[0] = newMutationRate;
+
+                        }
+
+                        // Somatic Rate Mutate:
+                        if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
+                        {
+                            double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
+                            currentSomaticIndividual[0] = newMutationRate;
+
+                        }
+
+                        /*
+                        // Fitness Mutate:
+                        rollSuccesses = probabilityOfSomaticSuccess.Sample();
+                        fitnessIncrease = rollSuccesses * normalDistribution(somaticMutationMean, mutationStdDev);
+                        // NOTICE: Must figure out how to properly modify normal distribution.
+
+                        if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentSomaticIndividual[2]);
+                        currentSomaticIndividual[2] += fitnessIncrease;*/
+                        
+
+                        if (currentSomaticIndividual[2] > highestFitness)
+                        {
+                            if (tempFittestIndividual[0] != currentIndividual[0])
+                            {
+                                germlineMutationRateChanged = true;
                             }
                             else
                             {
-                                double fitnessIncrease = 0;
-                                for (int o=0; o<individualLength; o++) {
-                                    fitnessIncrease += normalDistribution(germlineMutationMean, mutationStdDev);
-                                }
-                                if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[j]);
-                                currentIndividual[j] += fitnessIncrease;
+                                germlineMutationRateChanged = false;
                             }
-                        }
-
-                        double somaticMutationRate = currentIndividual[1];
-
-                        double[] currentSomaticIndividual = new double[3];
-
-                        currentIndividual.CopyTo(currentSomaticIndividual, 0);
-
-
-                        double currentFitness = 0;
-
-                        for (int u = 0; u < currentSomaticIndividual.Length; u++)
-                        {
-                            if (random.NextDouble() <= somaticMutationRate)
-                            {
-                                if (u == 0 || u == 1)
-                                {
-
-                                    double newMutationRate = normalDistribution(currentIndividual[u], mutationRateStdDev);
-                                    newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
-                                    currentSomaticIndividual[u] = newMutationRate;
-
-                                }
-                                else
-                                {
-                                    double fitnessIncrease = normalDistribution(somaticMutationMean, mutationStdDev);
-                                    if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[u]);
-
-                                    currentIndividual[u] += fitnessIncrease;
-                                }
-                            }
-                            if (u != 0 && u != 1)
-                            {
-                                currentFitness += currentSomaticIndividual[u];
-                            }
-                        }
-
-                        if (currentFitness > highestFitness)
-                        {
 
                             /*
-                            if (fittestIndividual[0] != currentIndividual[0] || fittestIndividual[1] != currentIndividual[1])
+                            if (tempFittestIndividual[1] != currentIndividual[1])
                             {
-                                mutationRateChanged = true;
+                                somaticMutationRateChanged = true;
+                            }
+                            else
+                            {
+                                somaticMutationRateChanged = false;
                             }
                             */
 
-                            highestFitness = currentFitness;
+                            highestFitness = currentSomaticIndividual[2];
                             tempFittestIndividual = currentIndividual;
                         }
                     }
