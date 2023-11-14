@@ -26,11 +26,11 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 1; // How many times to run the simulation?
+            int runCount = 3; // How many times to run the simulation?
 
-            double mutationStdDev = 1000;
-            double mutationRateStdDev = 0.000001; // 0.000000001
-            double mutationRateRollMultiplier = 1;
+            double mutationStdDev = 1;
+            double mutationRateStdDev = 0.000000001; // 0.000000001
+            double mutationRateRollMultiplier = 1000000;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
@@ -38,18 +38,18 @@ namespace Graph_Test
             int individualLength = 25000; // average for humans is 3200000000
             int populationSize = 100; // Or 100?
 
-            double startingGermlineMutationRate = 0.00001;  // average for humans is 0.000000012
-            double startingSomaticMutationRate  = 0.0002;  // average for humans is 0.00000028
-            // Standard is 0.0001
+            double startingGermlineMutationRate = 0.000000012;  // average for humans is 0.000000012
+            double startingSomaticMutationRate  = 0.00000028;  // average for humans is 0.00000028
+            // Standard is 0.00001
 
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 25000000;
+            int generationMax = 3000000;
             //int generationMax = 25000000;
 
-            double chartMaxY = 0.05; //0.0000005
-            double yIncIntervals = 0.05;
+            double chartMaxY = 0.0000005; //0.0000005
+            double yIncIntervals = 0.00000005;
 
             bool applyDriftBarrier = false;
 
@@ -111,7 +111,10 @@ namespace Graph_Test
                 while (generationCount < generationMax + 1)
                 {
 
-                    if (generationCount % 100000 == 0) { Debug.WriteLine("Generation: " + generationCount); }
+                    if (generationCount % 100000 == 0) {
+                        int seconds = (int)stopwatch.ElapsedMilliseconds / 1000;
+                        Debug.WriteLine($"Generation {generationCount}; {seconds}s");
+                    }
 
                     generationCount++;
 
@@ -191,14 +194,14 @@ namespace Graph_Test
 
                         }
 
-                        /*
+                        
                         // Fitness Mutate:
                         rollSuccesses = probabilityOfSomaticSuccess.Sample();
                         fitnessIncrease = rollSuccesses * normalDistribution(somaticMutationMean, mutationStdDev);
                         // NOTICE: Must figure out how to properly modify normal distribution.
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentSomaticIndividual[2]);
-                        currentSomaticIndividual[2] += fitnessIncrease;*/
+                        currentSomaticIndividual[2] += fitnessIncrease;
                         
 
                         if (currentSomaticIndividual[2] > highestFitness)
