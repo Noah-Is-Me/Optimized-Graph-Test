@@ -26,11 +26,11 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 3; // How many times to run the simulation?
+            int runCount = 1; // How many times to run the simulation?
 
             double mutationStdDev = 1;
-            double mutationRateStdDev = 0.000000001; // 0.000000001
-            double mutationRateRollMultiplier = 1000000;
+            double mutationRateStdDev = 0.000000005; // 0.000000001
+            double mutationRateRollMultiplier = 1000;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
@@ -45,13 +45,16 @@ namespace Graph_Test
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 3000000;
+            int generationMax = 1000000;
             //int generationMax = 25000000;
+
+            int generationSampleInterval = 10;
+            // !!! MUST be set greater than 1 if generationMax is greater than 5,000,000!
 
             double chartMaxY = 0.0000005; //0.0000005
             double yIncIntervals = 0.00000005;
 
-            bool applyDriftBarrier = false;
+            bool applyDriftBarrier = true;
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
             //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
@@ -79,7 +82,8 @@ namespace Graph_Test
             //double meanPositiveGermlineMutation = germlineMutationMean + (mutationStdDev * (Normal.PDF(germlineMutationMean, mutationStdDev, ZOfPositiveGermlineMutation) / probabilityOfPositiveGermlineMutation));
             //double meanPositiveSomaticMutation = somaticMutationMean + mutationStdDev * (Normal.PDF(somaticMutationMean, mutationStdDev, ZOfPositiveSomaticMutation) / probabilityOfPositiveSomaticMutation);
 
-            double idealFitness = (meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation / individualLength) * generationMax * Math.Log10(populationSize);
+            //double idealFitness = (meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation / individualLength) * generationMax * Math.Log10(populationSize);
+            double idealFitness = mutationStdDev * Math.Log10(populationSize) * Math.Log10(individualLength) * 1000; // The 1000 is arbitrary.
 
             Debug.WriteLine("germlineMutationMean: " + germlineMutationMean);
             Debug.WriteLine("ZOfPositiveGermlineMutation: " + ZOfPositiveGermlineMutation);
@@ -88,7 +92,7 @@ namespace Graph_Test
             Debug.WriteLine("positiveMean * positiveChance: " + meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation);
             Debug.WriteLine("Ideal Fitness: " + idealFitness);
 
-            double driftBarrierScaleFactor = 200 / idealFitness;
+            double driftBarrierScaleFactor = 10 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
             {
@@ -144,7 +148,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
-                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.000001);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.00000000000001);
 
                             currentIndividual[0] = newGermlineRate;
                         }
@@ -153,7 +157,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
-                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.000001);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.00000000000001);
 
                             currentIndividual[1] = newSomaticRate;
                         }
@@ -237,7 +241,7 @@ namespace Graph_Test
                 }
 
                 Charting chart = new Charting();
-                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness);
+                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness, generationSampleInterval);
             }
 
             stopwatch.Stop();
@@ -255,7 +259,7 @@ namespace Graph_Test
 
                 //Debug.WriteLine("Scale: " + tanhFunction + " ;   Distance: " + d);
 
-                fitnessIncrease = fitnessIncrease * tanhFunction / 100;
+                fitnessIncrease = fitnessIncrease * (tanhFunction / 100);
 
                 return fitnessIncrease;
             }
@@ -292,7 +296,7 @@ namespace Graph_Test
     }
     class Charting
     {
-        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness)
+        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness, int generationSampleInterval)
         {
 
             int fitnessMultiplier = 1;
@@ -344,7 +348,7 @@ namespace Graph_Test
             CA.AxisY2.Enabled = AxisEnabled.True;
             CA.AxisY2.Minimum = fitnessData.Min();
             CA.AxisY.Maximum = chartMaxY;
-            CA.AxisX.Maximum = generations;
+            CA.AxisX.Maximum = generations/generationSampleInterval;
 
             int chartMaxY2 = (int)Math.Ceiling(fitnessData.Max()*fitnessMultiplier);
             CA.AxisY2.Maximum = chartMaxY2;
@@ -358,11 +362,17 @@ namespace Graph_Test
             
             // if (applyDriftBarrier) CA.AxisY2.Maximum = idealFitness + (idealFitness / 100);
 
-            CA.AxisX.Interval = (double)generations/10;
+            CA.AxisX.Interval = (double)generations/(10*generationSampleInterval);
             CA.AxisY.Interval = chartMaxY/20;
 
-            CA.AxisX.Title = "Generations";
-            CA.AxisY.Title = "Mutation Rates";
+            if (generationSampleInterval > 1) {
+                CA.AxisX.Title = $"Generations ({generationSampleInterval}s)";
+            } else
+            {
+                CA.AxisX.Title = "Generations";
+            }
+            
+            CA.AxisY.Title = "Mutation Rates (mutatons per gene)";
             CA.AxisY2.Title = "Fitness (Points)";
 
             CA.AxisX.TitleAlignment = StringAlignment.Center;
@@ -390,11 +400,11 @@ namespace Graph_Test
             Chart.AntiAliasing = AntiAliasingStyles.Graphics;
             Chart.TextAntiAliasingQuality = TextAntiAliasingQuality.High;
 
-            for (int i=0;i<generations+1; i++)
+            for (int i=0;i<(generations/generationSampleInterval)+1; i++)
             {
-                germlineSeries.Points.AddXY(i, germlineData[i]);
-                somaticSeries.Points.AddXY(i, somaticData[i]);
-                fitnessSeries.Points.AddXY(i, fitnessData[i]* fitnessMultiplier);
+                germlineSeries.Points.AddXY(i, germlineData[i * generationSampleInterval]);
+                somaticSeries.Points.AddXY(i, somaticData[i * generationSampleInterval]);
+                fitnessSeries.Points.AddXY(i, fitnessData[i * generationSampleInterval] * fitnessMultiplier);
 
                 // if (applyDriftBarrier) driftBarrierSeries.Points.AddXY(i, idealFitness);
             }
