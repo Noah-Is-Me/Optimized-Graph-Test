@@ -26,10 +26,10 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 1; // How many times to run the simulation?
+            int runCount = 5; // How many times to run the simulation?
 
             double mutationStdDev = 1;
-            double mutationRateStdDev = 0.000000005; // 0.000000001
+            double mutationRateStdDev = 0.000000001; // 0.000000001
             double mutationRateRollMultiplier = 1000;
 
             double germlineMutationMean = -mutationStdDev / 1;
@@ -38,14 +38,18 @@ namespace Graph_Test
             int individualLength = 25000; // average for humans is 3200000000
             int populationSize = 100; // Or 100?
 
-            double startingGermlineMutationRate = 0.000000012;  // average for humans is 0.000000012
-            double startingSomaticMutationRate  = 0.00000028;  // average for humans is 0.00000028
+            //double startingGermlineMutationRate = 0.000000012;  // average for humans is 0.000000012
+            //double startingSomaticMutationRate  = 0.00000028;  // average for humans is 0.00000028
+
+            double startingGermlineMutationRate = 0.00000005;  // average for humans is 0.000000012
+            double startingSomaticMutationRate =  0.00000005;  // average for humans is 0.00000028
+
             // Standard is 0.00001
 
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 1000000;
+            int generationMax = 10000000;
             //int generationMax = 25000000;
 
             int generationSampleInterval = 10;
@@ -148,7 +152,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
-                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.00000000000001);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0);
 
                             currentIndividual[0] = newGermlineRate;
                         }
@@ -157,7 +161,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
-                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.00000000000001);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0);
 
                             currentIndividual[1] = newSomaticRate;
                         }
@@ -170,8 +174,6 @@ namespace Graph_Test
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[2]);
                         currentIndividual[2] += fitnessIncrease;
-                        
-
 
                         // SOMATIC MUTATIONS --------------------
 
@@ -206,7 +208,6 @@ namespace Graph_Test
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentSomaticIndividual[2]);
                         currentSomaticIndividual[2] += fitnessIncrease;
-                        
 
                         if (currentSomaticIndividual[2] > highestFitness)
                         {
@@ -253,13 +254,20 @@ namespace Graph_Test
 
             double applyDriftBarrierToFitness(double fitnessIncrease, double currentFitness)
             {
-                double d = currentFitness - idealFitness;
+                
+                    double d = currentFitness - idealFitness;
 
-                double tanhFunction = (-50 * Math.Tanh( (driftBarrierScaleFactor*d) + 2 )) + 50;
+                    double tanhFunction = (-50 * Math.Tanh((driftBarrierScaleFactor * d) + 2)) + 50;
 
                 //Debug.WriteLine("Scale: " + tanhFunction + " ;   Distance: " + d);
 
-                fitnessIncrease = fitnessIncrease * (tanhFunction / 100);
+                if (fitnessIncrease > 0)
+                {
+                    fitnessIncrease = fitnessIncrease * (tanhFunction / 100);
+                } else
+                {
+                    fitnessIncrease = fitnessIncrease * (1 - (tanhFunction / 100));
+                }
 
                 return fitnessIncrease;
             }
