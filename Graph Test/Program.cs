@@ -26,7 +26,7 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 5; // How many times to run the simulation?
+            int runCount = 1; // How many times to run the simulation?
 
             double mutationStdDev = 1;
             double mutationRateStdDev = 0.000000001; // 0.000000001
@@ -49,13 +49,13 @@ namespace Graph_Test
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 10000000;
+            int generationMax = 50000000;
             //int generationMax = 25000000;
 
-            int generationSampleInterval = 10;
+            int generationSampleInterval = 50;
             // !!! MUST be set greater than 1 if generationMax is greater than 5,000,000!
 
-            double chartMaxY = 0.0000005; //0.0000005
+            double chartMaxY = 0.0000001; //0.0000005
             double yIncIntervals = 0.00000005;
 
             bool applyDriftBarrier = true;
