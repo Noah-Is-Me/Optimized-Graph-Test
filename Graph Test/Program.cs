@@ -30,7 +30,7 @@ namespace Graph_Test
 
             double mutationStdDev = 1;
             double mutationRateStdDev = 0.000000001; // 0.000000001
-            double mutationRateRollMultiplier = 1000;
+            double mutationRateRollMultiplier = 100;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
@@ -49,10 +49,10 @@ namespace Graph_Test
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 50000000;
+            int generationMax = 100000000;
             //int generationMax = 25000000;
 
-            int generationSampleInterval = 50;
+            int generationSampleInterval = 100;
             // !!! MUST be set greater than 1 if generationMax is greater than 5,000,000!
 
             double chartMaxY = 0.0000001; //0.0000005
@@ -108,11 +108,17 @@ namespace Graph_Test
                 fittestIndividual[0] = startingGermlineMutationRate;
                 fittestIndividual[1] = startingSomaticMutationRate;
 
-                double[] germlineDataPoints = new double[generationMax + 1];
-                double[] somaticDataPoints = new double[generationMax + 1];
-                double[] fitnessDataPoints = new double[generationMax + 1];
+                
+                double[] germlineDataPoints = new double[2];
+                double[] somaticDataPoints = new double[2];
+                double[] fitnessDataPoints = new double[2];
+                
 
                 fittestIndividual[2] = 0;
+
+                Chart chart = new Chart();
+                setupGraph(chart);
+
 
                 stopwatch.Start();
 
@@ -126,9 +132,23 @@ namespace Graph_Test
 
                     generationCount++;
 
-                    germlineDataPoints[generationCount - 1] = fittestIndividual[0];
-                    somaticDataPoints[generationCount - 1] = fittestIndividual[1];
-                    fitnessDataPoints[generationCount - 1] = highestFitness;
+                    if (fittestIndividual[0] < germlineDataPoints[0]) germlineDataPoints[0] = fittestIndividual[0];
+                    else if (fittestIndividual[0] > germlineDataPoints[1]) germlineDataPoints[1] = fittestIndividual[0];
+
+                    if (fittestIndividual[1] < somaticDataPoints[0]) somaticDataPoints[0] = fittestIndividual[1];
+                    else if (fittestIndividual[1] > somaticDataPoints[1]) somaticDataPoints[1] = fittestIndividual[1];
+
+                    if (fittestIndividual[2] < fitnessDataPoints[0]) fitnessDataPoints[0] = fittestIndividual[2];
+                    else if (fittestIndividual[2] > fitnessDataPoints[1]) fitnessDataPoints[1] = fittestIndividual[2];
+
+
+                    if (generationCount % generationSampleInterval == 0)
+                    {
+                        chart.Series["Germline Mutation Rate"].Points.AddXY(generationCount / generationSampleInterval, fittestIndividual[0]);
+                        chart.Series["Somatic Mutation Rate"].Points.AddXY(generationCount / generationSampleInterval, fittestIndividual[1]);
+                        chart.Series["Highest Fitness"].Points.AddXY(generationCount / generationSampleInterval, fittestIndividual[2]);
+                    }
+
 
                     highestFitness = double.NegativeInfinity;
 
@@ -152,7 +172,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
-                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.00000000001);
 
                             currentIndividual[0] = newGermlineRate;
                         }
@@ -161,7 +181,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
-                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.00000000001);
 
                             currentIndividual[1] = newSomaticRate;
                         }
@@ -186,7 +206,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate*mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.00000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
@@ -195,7 +215,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.0001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.00000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
@@ -241,8 +261,8 @@ namespace Graph_Test
 
                 }
 
-                Charting chart = new Charting();
-                chart.CreateCharts(germlineDataPoints, somaticDataPoints, fitnessDataPoints, generationMax, chartMaxY, yIncIntervals, populationSize, applyDriftBarrier, idealFitness, generationSampleInterval);
+                finishGraph(chart, somaticDataPoints, germlineDataPoints, fitnessDataPoints);
+
             }
 
             stopwatch.Stop();
@@ -300,137 +320,134 @@ namespace Graph_Test
             }
             */
 
-        }
-    }
-    class Charting
-    {
-        public void CreateCharts(double[] germlineData, double[] somaticData, double[] fitnessData, int generations, double chartMaxY, double yIncIntervals, int populationSize, bool applyDriftBarrier, double idealFitness, int generationSampleInterval)
-        {
-
-            int fitnessMultiplier = 1;
-            
-            if (somaticData.Max() > chartMaxY || germlineData.Max() > chartMaxY) {
-                chartMaxY = Math.Max(somaticData.Max(), germlineData.Max());
-
-                double x = Math.Ceiling(chartMaxY/yIncIntervals) * yIncIntervals;
-
-                chartMaxY = x;
-            }
-            
-
-            double chartMinY = 0;
-
-            //string genLabel = generations.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-            //string popLabel = populationSize.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-
-            string graphInfo = $"{generations}gen {populationSize}pop {DateTime.Now.ToString("MMM-dd-yyyy hh-mm-ss-fff tt")}";
-            //string imagePath = @"C:\\Users\\Noah Sonfield\\source\\repos\\Graph Test\\Graph Test\\Graphs\\" + graphInfo + ".png";
-            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string projectDirectory = Directory.GetParent(Directory.GetParent(Directory.GetParent(baseDirectory).FullName).FullName).FullName;
-            string graphsFolderPath = Path.Combine(projectDirectory, "Graphs");
-            string imagePath = Path.Combine(graphsFolderPath, graphInfo + ".png");
-
-            Debug.WriteLine("Image Path: " + imagePath);
-
-            Chart Chart = new Chart();
-            ChartArea CA = Chart.ChartAreas.Add("A1");
-
-            Series fitnessSeries = Chart.Series.Add("Highest Fitness");
-            Series somaticSeries = Chart.Series.Add("Somatic Mutation Rate");
-            Series germlineSeries = Chart.Series.Add("Germline Mutation Rate");
-            //Series driftBarrierSeries = Chart.Series.Add("Ideal Fitness");
-
-            fitnessSeries.ChartType = SeriesChartType.FastLine;
-            somaticSeries.ChartType = SeriesChartType.FastLine;
-            germlineSeries.ChartType = SeriesChartType.FastLine;
-            //driftBarrierSeries.ChartType = SeriesChartType.FastLine;
-
-            fitnessSeries.YAxisType = AxisType.Secondary;
-            //S4.YAxisType = AxisType.Secondary;
-
-            Chart.BackColor = Color.White;
-            CA.BackColor = Color.White;
-            CA.AxisX.Minimum = 0;
-            CA.AxisY.Minimum = chartMinY;
-
-            CA.AxisY2.Enabled = AxisEnabled.True;
-            CA.AxisY2.Minimum = fitnessData.Min();
-            CA.AxisY.Maximum = chartMaxY;
-            CA.AxisX.Maximum = generations/generationSampleInterval;
-
-            int chartMaxY2 = (int)Math.Ceiling(fitnessData.Max()*fitnessMultiplier);
-            CA.AxisY2.Maximum = chartMaxY2;
-            //CA.AxisY2.Interval = chartMaxY2 / 20;
-
-            if (fitnessData.Max() == fitnessData.Min())
+            void setupGraph(Chart Chart)
             {
-                CA.AxisY2.Maximum = fitnessData.Max()* fitnessMultiplier + 1*fitnessMultiplier;
+                ChartArea CA = Chart.ChartAreas.Add("A1");
+
+                Series fitnessSeries = Chart.Series.Add("Highest Fitness");
+                Series somaticSeries = Chart.Series.Add("Somatic Mutation Rate");
+                Series germlineSeries = Chart.Series.Add("Germline Mutation Rate");
+                //Series driftBarrierSeries = Chart.Series.Add("Ideal Fitness");
+
+                fitnessSeries.ChartType = SeriesChartType.FastLine;
+                somaticSeries.ChartType = SeriesChartType.FastLine;
+                germlineSeries.ChartType = SeriesChartType.FastLine;
+                //driftBarrierSeries.ChartType = SeriesChartType.FastLine;
+
+                fitnessSeries.YAxisType = AxisType.Secondary;
+                //S4.YAxisType = AxisType.Secondary;
+
+                Chart.BackColor = Color.White;
+                CA.BackColor = Color.White;
+
+                if (generationSampleInterval > 1)
+                {
+                    CA.AxisX.Title = $"Generations ({generationSampleInterval}s)";
+                }
+                else
+                {
+                    CA.AxisX.Title = "Generations";
+                }
+
+                CA.AxisY.Title = "Mutation Rates (mutatons per gene)";
+                CA.AxisY2.Title = "Fitness (Points)";
+
+                CA.AxisX.TitleAlignment = StringAlignment.Center;
+                CA.AxisY.TitleAlignment = StringAlignment.Center;
+                CA.AxisY2.TitleAlignment = StringAlignment.Center;
+
+                CA.AxisX.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
+                CA.AxisY.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
+                CA.AxisY2.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
+
+                Chart.Titles.Add("Fitness and the Evolution of the Germline and Somatic Mutation Rates Over Generations");
+                Chart.Titles.ElementAt(0).Font = new Font("Ariel", 15, FontStyle.Bold);
+                Chart.Size = new Size(1920, 1080);
+
+                Chart.Series["Germline Mutation Rate"].BorderWidth = 2;
+                Chart.Series["Somatic Mutation Rate"].BorderWidth = 2;
+                Chart.Series["Highest Fitness"].BorderWidth = 4;
+                //Chart.Series["Ideal Fitness"].BorderWidth = 4;
+
+                Chart.Series["Germline Mutation Rate"].Color = Color.Blue;
+                Chart.Series["Somatic Mutation Rate"].Color = Color.Red;
+                Chart.Series["Highest Fitness"].Color = Color.DarkGreen;
+                //Chart.Series["Ideal Fitness"].Color = Color.DarkOrange;
+
+                Chart.AntiAliasing = AntiAliasingStyles.Graphics;
+                Chart.TextAntiAliasingQuality = TextAntiAliasingQuality.High;
+
+                Legend L = Chart.Legends.Add("L");
+                L.LegendStyle = LegendStyle.Column;
+                L.Title = "Legend";
+                L.TitleAlignment = StringAlignment.Center;
+                L.BackColor = Color.LightGray;
+                L.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
+                L.Font = new Font("Ariel", 15, FontStyle.Bold);
+                L.IsDockedInsideChartArea = true;
+                L.DockedToChartArea = "A1";
+                //L.Docking = Docking.Bottom;
+                L.Docking = Docking.Top;
+                L.Alignment = StringAlignment.Near;
+
+                CA.AxisX.Minimum = 0;
+                CA.AxisX.Maximum = generationMax / generationSampleInterval;
             }
 
-            
-            // if (applyDriftBarrier) CA.AxisY2.Maximum = idealFitness + (idealFitness / 100);
-
-            CA.AxisX.Interval = (double)generations/(10*generationSampleInterval);
-            CA.AxisY.Interval = chartMaxY/20;
-
-            if (generationSampleInterval > 1) {
-                CA.AxisX.Title = $"Generations ({generationSampleInterval}s)";
-            } else
+            void finishGraph(Chart Chart, double[] somaticData, double[] germlineData, double[] fitnessData)
             {
-                CA.AxisX.Title = "Generations";
+                int fitnessMultiplier = 1;
+
+                if (somaticData[1] > chartMaxY || germlineData[1] > chartMaxY)
+                {
+                    chartMaxY = Math.Max(somaticData[1], germlineData[1]);
+
+                    double x = Math.Ceiling(chartMaxY / yIncIntervals) * yIncIntervals;
+
+                    chartMaxY = x;
+                }
+
+
+                double chartMinY = 0;
+
+                //string genLabel = generations.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+                //string popLabel = populationSize.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
+                string graphInfo = $"{generationMax}gen {populationSize}pop {DateTime.Now.ToString("MMM-dd-yyyy hh-mm-ss-fff tt")}";
+                //string imagePath = @"C:\\Users\\Noah Sonfield\\source\\repos\\Graph Test\\Graph Test\\Graphs\\" + graphInfo + ".png";
+                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string projectDirectory = Directory.GetParent(Directory.GetParent(Directory.GetParent(baseDirectory).FullName).FullName).FullName;
+                string graphsFolderPath = Path.Combine(projectDirectory, "Graphs");
+                string imagePath = Path.Combine(graphsFolderPath, graphInfo + ".png");
+
+                Debug.WriteLine("Image Path: " + imagePath);
+
+                ChartArea CA = Chart.ChartAreas["A1"];
+
+                CA.AxisY.Minimum = chartMinY;
+
+                CA.AxisY2.Enabled = AxisEnabled.True;
+                CA.AxisY2.Minimum = fitnessData[0];
+                CA.AxisY.Maximum = chartMaxY;
+
+
+                int chartMaxY2 = (int)Math.Ceiling(fitnessData[1] * fitnessMultiplier);
+                CA.AxisY2.Maximum = chartMaxY2;
+                //CA.AxisY2.Interval = chartMaxY2 / 20;
+
+                if (fitnessData[1] == fitnessData[0])
+                {
+                    CA.AxisY2.Maximum = fitnessData[1] * fitnessMultiplier + 1 * fitnessMultiplier;
+                }
+
+
+                // if (applyDriftBarrier) CA.AxisY2.Maximum = idealFitness + (idealFitness / 100);
+
+                CA.AxisX.Interval = (double)generationMax / (10 * generationSampleInterval);
+                CA.AxisY.Interval = chartMaxY / 20;
+
+                Chart.SaveImage(imagePath, ChartImageFormat.Png);
             }
-            
-            CA.AxisY.Title = "Mutation Rates (mutatons per gene)";
-            CA.AxisY2.Title = "Fitness (Points)";
-
-            CA.AxisX.TitleAlignment = StringAlignment.Center;
-            CA.AxisY.TitleAlignment = StringAlignment.Center;
-            CA.AxisY2.TitleAlignment = StringAlignment.Center;
-
-            CA.AxisX.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
-            CA.AxisY.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
-            CA.AxisY2.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
-
-            Chart.Titles.Add("Fitness and the Evolution of the Germline and Somatic Mutation Rates Over Generations");
-            Chart.Titles.ElementAt(0).Font = new Font("Ariel", 15, FontStyle.Bold);
-            Chart.Size = new Size(1920, 1080);
-
-            Chart.Series["Germline Mutation Rate"].BorderWidth = 2;
-            Chart.Series["Somatic Mutation Rate"].BorderWidth = 2;
-            Chart.Series["Highest Fitness"].BorderWidth = 4;
-            //Chart.Series["Ideal Fitness"].BorderWidth = 4;
-
-            Chart.Series["Germline Mutation Rate"].Color = Color.Blue;
-            Chart.Series["Somatic Mutation Rate"].Color = Color.Red;
-            Chart.Series["Highest Fitness"].Color = Color.DarkGreen;
-            //Chart.Series["Ideal Fitness"].Color = Color.DarkOrange;
-
-            Chart.AntiAliasing = AntiAliasingStyles.Graphics;
-            Chart.TextAntiAliasingQuality = TextAntiAliasingQuality.High;
-
-            for (int i=0;i<(generations/generationSampleInterval)+1; i++)
-            {
-                germlineSeries.Points.AddXY(i, germlineData[i * generationSampleInterval]);
-                somaticSeries.Points.AddXY(i, somaticData[i * generationSampleInterval]);
-                fitnessSeries.Points.AddXY(i, fitnessData[i * generationSampleInterval] * fitnessMultiplier);
-
-                // if (applyDriftBarrier) driftBarrierSeries.Points.AddXY(i, idealFitness);
-            }
-
-            Legend L = Chart.Legends.Add("L");
-            L.LegendStyle = LegendStyle.Column;
-            L.Title = "Legend";
-            L.TitleAlignment = StringAlignment.Center;
-            L.BackColor = Color.LightGray;
-            L.TitleFont = new Font("Ariel", 15, FontStyle.Bold);
-            L.Font = new Font("Ariel", 15, FontStyle.Bold);
-            L.IsDockedInsideChartArea = true;
-            L.DockedToChartArea = "A1";
-            //L.Docking = Docking.Bottom;
-            L.Docking = Docking.Top;
-            L.Alignment = StringAlignment.Near;
-
-            Chart.SaveImage(imagePath, ChartImageFormat.Png);
         }
     }
 }
