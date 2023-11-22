@@ -26,11 +26,11 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 1; // How many times to run the simulation?
+            int runCount = 3; // How many times to run the simulation?
 
-            double mutationStdDev = 1;
+            double mutationStdDev = 3;
             double mutationRateStdDev = 0.000000001; // 0.000000001
-            double mutationRateRollMultiplier = 100;
+            double mutationRateRollMultiplier = 200;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
@@ -38,21 +38,18 @@ namespace Graph_Test
             int individualLength = 25000; // average for humans is 3200000000
             int populationSize = 100; // Or 100?
 
-            //double startingGermlineMutationRate = 0.000000012;  // average for humans is 0.000000012
-            //double startingSomaticMutationRate  = 0.00000028;  // average for humans is 0.00000028
-
-            double startingGermlineMutationRate = 0.00000005;  // average for humans is 0.000000012
-            double startingSomaticMutationRate =  0.00000005;  // average for humans is 0.00000028
+            double startingGermlineMutationRate = 0.0000005;  // average for humans is 0.000000012
+            double startingSomaticMutationRate =  0.0000005;  // average for humans is 0.00000028
 
             // Standard is 0.00001
 
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 100000000;
+            int generationMax = 50000000;
             //int generationMax = 25000000;
 
-            int generationSampleInterval = 100;
+            int generationSampleInterval = 50;
             // !!! MUST be set greater than 1 if generationMax is greater than 5,000,000!
 
             double chartMaxY = 0.0000001; //0.0000005
@@ -87,7 +84,7 @@ namespace Graph_Test
             //double meanPositiveSomaticMutation = somaticMutationMean + mutationStdDev * (Normal.PDF(somaticMutationMean, mutationStdDev, ZOfPositiveSomaticMutation) / probabilityOfPositiveSomaticMutation);
 
             //double idealFitness = (meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation / individualLength) * generationMax * Math.Log10(populationSize);
-            double idealFitness = mutationStdDev * Math.Log10(populationSize) * Math.Log10(individualLength) * 1000; // The 1000 is arbitrary.
+            double idealFitness = mutationStdDev * Math.Log10(populationSize) * Math.Log10(individualLength) * 500; // The 1000 is arbitrary.
 
             Debug.WriteLine("germlineMutationMean: " + germlineMutationMean);
             Debug.WriteLine("ZOfPositiveGermlineMutation: " + ZOfPositiveGermlineMutation);
@@ -172,7 +169,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
-                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.00000000001);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.000000000000000000001);
 
                             currentIndividual[0] = newGermlineRate;
                         }
@@ -181,7 +178,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
-                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.00000000001);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.000000000000000000001);
 
                             currentIndividual[1] = newSomaticRate;
                         }
@@ -206,7 +203,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate*mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.00000000001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000000000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
@@ -215,7 +212,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.00000000001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000000000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
