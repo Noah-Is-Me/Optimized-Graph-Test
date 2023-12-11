@@ -26,7 +26,7 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 3; // How many times to run the simulation?
+            int runCount = 10; // How many times to run the simulation?
 
             double mutationStdDev = 1;
             double mutationRateStdDev = 0.00000001; // 0.000000001
@@ -46,7 +46,7 @@ namespace Graph_Test
             //double startingGermlineMutationRate = (0.000000012 * 3200000000) / individualLength;
             //double startingSomaticMutationRate = (0.00000028 * 3200000000) / individualLength;
 
-            int generationMax = 100000000;
+            int generationMax = 10000000;
             //int generationMax = 25000000;
 
             int generationSampleInterval = 100;
@@ -55,7 +55,10 @@ namespace Graph_Test
             double chartMaxY = 0.0000001; //0.0000005
             double yIncIntervals = 0.00000005;
 
-            bool applyDriftBarrier = true;
+            bool applyDriftBarrier = false;
+            // DOUBLES RUNTIME -- FIX THIS
+
+            bool applyGeneticDrift = true;
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
             //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
@@ -160,6 +163,15 @@ namespace Graph_Test
 
                     for (int i = 0; i < populationSize; i++)
                     {
+
+                        if (applyGeneticDrift)
+                        {
+                            if (random.Next(10) == 0)
+                            {
+                                continue;
+                            }
+                        }
+
                         double[] currentIndividual = new double[3];
                         fittestIndividual.CopyTo(currentIndividual, 0);
 
@@ -186,8 +198,7 @@ namespace Graph_Test
 
                         // Fitness Mutate:
                         int rollSuccesses = probabilityOfGermlineSuccess.Sample();
-                        double fitnessIncrease = rollSuccesses * normalDistribution(germlineMutationMean, mutationStdDev);
-                        // NOTICE: Must figure out how to properly modify normal distribution.
+                        double fitnessIncrease = normalDistribution(germlineMutationMean * rollSuccesses, mutationStdDev * rollSuccesses);
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[2]);
                         currentIndividual[2] += fitnessIncrease;
@@ -200,7 +211,7 @@ namespace Graph_Test
                         currentIndividual.CopyTo(currentSomaticIndividual, 0);
 
                         // Germline Rate Mutate:
-                        if (random.NextDouble() <= somaticMutationRate*mutationRateRollMultiplier)
+                        if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
                             newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000000000000001);
@@ -217,11 +228,10 @@ namespace Graph_Test
 
                         }
 
-                        
+
                         // Fitness Mutate:
                         rollSuccesses = probabilityOfSomaticSuccess.Sample();
-                        fitnessIncrease = rollSuccesses * normalDistribution(somaticMutationMean, mutationStdDev);
-                        // NOTICE: Must figure out how to properly modify normal distribution.
+                        fitnessIncrease = normalDistribution(somaticMutationMean * rollSuccesses, mutationStdDev * rollSuccesses);
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentSomaticIndividual[2]);
                         currentSomaticIndividual[2] += fitnessIncrease;
@@ -251,10 +261,14 @@ namespace Graph_Test
                             highestFitness = currentSomaticIndividual[2];
                             tempFittestIndividual = currentIndividual;
                         }
+
+                        
                     }
 
-
-                    fittestIndividual = tempFittestIndividual;
+                    if (!double.IsNegativeInfinity(highestFitness))
+                    {
+                        fittestIndividual = tempFittestIndividual;
+                    }
 
                 }
 
