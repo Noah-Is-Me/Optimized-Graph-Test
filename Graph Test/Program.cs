@@ -26,7 +26,7 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 10; // How many times to run the simulation?
+            int runCount = 1; // How many times to run the simulation?
 
             double mutationStdDev = 1;
             double mutationRateStdDev = 0.00000001; // 0.000000001
@@ -55,10 +55,10 @@ namespace Graph_Test
             double chartMaxY = 0.0000001; //0.0000005
             double yIncIntervals = 0.00000005;
 
-            bool applyDriftBarrier = false;
+            bool applyDriftBarrier = true;
             // DOUBLES RUNTIME -- FIX THIS
 
-            bool applyGeneticDrift = true;
+            bool applyGeneticDrift = false;
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
             //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
@@ -198,7 +198,7 @@ namespace Graph_Test
 
                         // Fitness Mutate:
                         int rollSuccesses = probabilityOfGermlineSuccess.Sample();
-                        double fitnessIncrease = normalDistribution(germlineMutationMean * rollSuccesses, mutationStdDev * rollSuccesses);
+                        double fitnessIncrease = normalDistribution(germlineMutationMean * rollSuccesses, mutationStdDev * Math.Sqrt(rollSuccesses));
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentIndividual[2]);
                         currentIndividual[2] += fitnessIncrease;
@@ -231,7 +231,7 @@ namespace Graph_Test
 
                         // Fitness Mutate:
                         rollSuccesses = probabilityOfSomaticSuccess.Sample();
-                        fitnessIncrease = normalDistribution(somaticMutationMean * rollSuccesses, mutationStdDev * rollSuccesses);
+                        fitnessIncrease = normalDistribution(somaticMutationMean * rollSuccesses, mutationStdDev * Math.Sqrt(rollSuccesses));
 
                         if (applyDriftBarrier) fitnessIncrease = applyDriftBarrierToFitness(fitnessIncrease, currentSomaticIndividual[2]);
                         currentSomaticIndividual[2] += fitnessIncrease;
@@ -286,9 +286,9 @@ namespace Graph_Test
             double applyDriftBarrierToFitness(double fitnessIncrease, double currentFitness)
             {
                 
-                    double d = currentFitness - idealFitness;
+                double d = currentFitness - idealFitness;
 
-                    double tanhFunction = (-50 * Math.Tanh((driftBarrierScaleFactor * d) + 2)) + 50;
+                double tanhFunction = (-50 * Math.Tanh((driftBarrierScaleFactor * d) + 3)) + 50;
 
                 //Debug.WriteLine("Scale: " + tanhFunction + " ;   Distance: " + d);
 
