@@ -62,7 +62,7 @@ namespace Graph_Test
             int driftKillCount = 0;
 
             if (applyGeneticDrift) {
-                driftKillCount = Math.Log(populationSize, 2);
+                driftKillCount = (int)Math.Round(Math.Log(populationSize, 2));
             }
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
@@ -356,7 +356,7 @@ namespace Graph_Test
                     CA.AxisX.Title = "Generations";
                 }
 
-                CA.AxisY.Title = "Mutation Rates (mutatons per gene)";
+                CA.AxisY.Title = "Mutation Rates (mutations per gene)";
                 CA.AxisY2.Title = "Fitness (Points)";
 
                 CA.AxisX.TitleAlignment = StringAlignment.Center;
