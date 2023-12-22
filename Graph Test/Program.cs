@@ -59,6 +59,11 @@ namespace Graph_Test
             // DOUBLES RUNTIME -- FIX THIS
 
             bool applyGeneticDrift = false;
+            int driftKillCount = 0;
+
+            if (applyGeneticDrift) {
+                driftKillCount = Math.Log(populationSize, 2);
+            }
 
             double ZOfPositiveGermlineMutation = (0 - germlineMutationMean) / mutationStdDev;
             //double ZOfPositiveSomaticMutation = (0 - somaticMutationMean) / mutationStdDev;
@@ -161,17 +166,8 @@ namespace Graph_Test
                         probabilityOfGermlineSuccess = new Poisson(germlineMutationRate * individualLength);
                     }
 
-                    for (int i = 0; i < populationSize; i++)
+                    for (int i = 0; i < populationSize - driftKillCount; i++)
                     {
-
-                        if (applyGeneticDrift)
-                        {
-                            if (random.Next(10) == 0)
-                            {
-                                continue;
-                            }
-                        }
-
                         double[] currentIndividual = new double[3];
                         fittestIndividual.CopyTo(currentIndividual, 0);
 
@@ -181,7 +177,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newGermlineRate = normalDistribution(currentIndividual[0], mutationRateStdDev);
-                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.000000000000000000001);
+                            newGermlineRate = Math.Max(Math.Min(newGermlineRate, 1), 0.000000000001);
 
                             currentIndividual[0] = newGermlineRate;
                         }
@@ -190,7 +186,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= germlineMutationRate * mutationRateRollMultiplier)
                         {
                             double newSomaticRate = normalDistribution(currentIndividual[1], mutationRateStdDev);
-                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.000000000000000000001);
+                            newSomaticRate = Math.Max(Math.Min(newSomaticRate, 1), 0.000000000001);
 
                             currentIndividual[1] = newSomaticRate;
                         }
@@ -214,7 +210,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000000000000001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
@@ -223,7 +219,7 @@ namespace Graph_Test
                         if (random.NextDouble() <= somaticMutationRate * mutationRateRollMultiplier)
                         {
                             double newMutationRate = normalDistribution(currentSomaticIndividual[0], mutationRateStdDev);
-                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000000000000001);
+                            newMutationRate = Math.Max(Math.Min(newMutationRate, 1), 0.000000000001);
                             currentSomaticIndividual[0] = newMutationRate;
 
                         }
