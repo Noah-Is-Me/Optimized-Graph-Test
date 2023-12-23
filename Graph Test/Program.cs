@@ -58,7 +58,7 @@ namespace Graph_Test
             bool applyDriftBarrier = true;
             // DOUBLES RUNTIME -- FIX THIS
 
-            bool applyGeneticDrift = false;
+            bool applyGeneticDrift = true;
             int driftKillCount = 0;
 
             if (applyGeneticDrift) {
@@ -101,7 +101,7 @@ namespace Graph_Test
             Debug.WriteLine("positiveMean * positiveChance: " + meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation);
             Debug.WriteLine("Ideal Fitness: " + idealFitness);
 
-            double driftBarrierScaleFactor = 10 / idealFitness;
+            double driftBarrierScaleFactor = 1000 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
             {
