@@ -26,17 +26,17 @@ namespace Graph_Test
             Random random = new Random();
             Stopwatch stopwatch = new Stopwatch();
 
-            int runCount = 1; // How many times to run the simulation?
+            int runCount = 2; // How many times to run the simulation?
 
             double mutationStdDev = 1;
             double mutationRateStdDev = 0.00000001; // 0.000000001
-            double mutationRateRollMultiplier = 100;
+            double mutationRateRollMultiplier = 1000;
 
             double germlineMutationMean = -mutationStdDev / 1;
             double somaticMutationMean = -mutationStdDev / 1;
 
             int individualLength = 25000; // average for humans is 3200000000
-            int populationSize = 100; // Or 100?
+            int populationSize = 300; // Or 100?
 
             double startingGermlineMutationRate = 0.0000005;  // average for humans is 0.000000012
             double startingSomaticMutationRate =  0.0000005;  // average for humans is 0.00000028
@@ -101,7 +101,7 @@ namespace Graph_Test
             Debug.WriteLine("positiveMean * positiveChance: " + meanPositiveGermlineMutation * probabilityOfPositiveGermlineMutation);
             Debug.WriteLine("Ideal Fitness: " + idealFitness);
 
-            double driftBarrierScaleFactor = 1000 / idealFitness;
+            double driftBarrierScaleFactor = 300 / idealFitness;
 
             for (int runs = 0; runs < runCount; runs++)
             {
