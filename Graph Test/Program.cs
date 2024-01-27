@@ -36,7 +36,7 @@ namespace Graph_Test
             double somaticMutationMean = -mutationStdDev / 1;
 
             int individualLength = 25000; // average for humans is 3200000000
-            int populationSize = 300; // Or 100?
+            int populationSize = 100; // Or 100?
 
             double startingGermlineMutationRate = 0.0000005;  // average for humans is 0.000000012
             double startingSomaticMutationRate =  0.0000005;  // average for humans is 0.00000028
