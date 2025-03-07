@@ -421,7 +421,6 @@ namespace Graph_Test
                 //string popLabel = populationSize.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
 
                 string graphInfo = $"{generationMax}gen {populationSize}pop {DateTime.Now.ToString("MMM-dd-yyyy hh-mm-ss-fff tt")}";
-                //string imagePath = @"C:\\Users\\Noah Sonfield\\source\\repos\\Graph Test\\Graph Test\\Graphs\\" + graphInfo + ".png";
                 string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 string projectDirectory = Directory.GetParent(Directory.GetParent(Directory.GetParent(baseDirectory).FullName).FullName).FullName;
                 string graphsFolderPath = Path.Combine(projectDirectory, "Graphs");
